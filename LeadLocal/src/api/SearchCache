@@ -1,0 +1,65 @@
+// Implement search result caching
+class SearchCache {
+  private cache = new Map<string, { data: BusinessLead[], timestamp: number }>();
+  private readonly CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+  getCacheKey(params: SearchParams): string {
+    return JSON.stringify(params);
+  }
+
+  get(params: SearchParams): BusinessLead[] | null {
+    const key = this.getCacheKey(params);
+    const cached = this.cache.get(key);
+    
+    if (!cached) return null;
+    
+    const isExpired = Date.now() - cached.timestamp > this.CACHE_DURATION;
+    if (isExpired) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return cached.data;
+  }
+
+  set(params: SearchParams, data: BusinessLead[]): void {
+    const key = this.getCacheKey(params);
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+}
+
+// Implement infinite scroll for large result sets
+function useInfiniteScroll(businesses: BusinessLead[], pageSize = 20) {
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadMore = useCallback(() => {
+    if (isLoading || visibleCount >= businesses.length) return;
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setVisibleCount(prev => Math.min(prev + pageSize, businesses.length));
+      setIsLoading(false);
+    }, 500);
+  }, [isLoading, visibleCount, businesses.length, pageSize]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+        loadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadMore]);
+
+  return {
+    visibleBusinesses: businesses.slice(0, visibleCount),
+    isLoading,
+    hasMore: visibleCount < businesses.length
+  };
+}

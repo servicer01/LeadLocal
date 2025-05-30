@@ -1,0 +1,75 @@
+// Usage analytics
+class AnalyticsManager {
+  static trackSearch(params: SearchParams, resultCount: number) {
+    // Track search patterns for optimization
+    this.sendEvent('search_performed', {
+      location: params.zipCode ? 'zip' : 'gps',
+      radius: params.radius,
+      industries: params.businessTypes,
+      result_count: resultCount,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  static trackExport(format: string, count: number) {
+    this.sendEvent('export_performed', {
+      format,
+      prospect_count: count,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  static trackAIAnalysis(businessId: string) {
+    this.sendEvent('ai_analysis_generated', {
+      business_id: businessId,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  private static sendEvent(eventName: string, data: any) {
+    // Send to analytics service (GA4, Mixpanel, etc.)
+    if (typeof gtag !== 'undefined') {
+      gtag('event', eventName, data);
+    }
+  }
+}
+
+// User onboarding flow
+function OnboardingFlow() {
+  const [step, setStep] = useState(0);
+  
+  const steps = [
+    {
+      title: "Welcome to LeadLocal!",
+      content: "Find qualified local prospects for your AI solutions business in seconds.",
+      action: "Get Started"
+    },
+    {
+      title: "Enter Your Location",
+      content: "Start by entering your ZIP code or using 'Find Me' to detect your location.",
+      action: "Next"
+    },
+    {
+      title: "Select Industries",
+      content: "Choose the types of businesses you want to target with your AI solutions.",
+      action: "Next"
+    },
+    {
+      title: "AI-Powered Insights",
+      content: "Each prospect gets an AI readiness score and personalized opportunity analysis.",
+      action: "Start Searching"
+    }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">{steps[step].title}</h2>
+          <p className="text-gray-600 mb-6">{steps[step].content}</p>
+          
+          <div className="flex justify-center mb-6">
+            {steps.map((_, index) => (
+              <div 
+                key={index}
+                className={`w-3 h-3 rounded-

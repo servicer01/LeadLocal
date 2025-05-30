@@ -1,0 +1,76 @@
+// Cold outreach email generator
+function EmailGenerator({ business }: { business: BusinessLead }) {
+  const [emailTemplate, setEmailTemplate] = useState('');
+  const [customizing, setCustomizing] = useState(false);
+
+  const generateEmail = async () => {
+    setCustomizing(true);
+    
+    const prompt = `
+      Generate a personalized cold email for AI solutions outreach:
+      
+      Business: ${business.name}
+      Industry: ${business.industry}
+      Size: ${business.employeeCount} employees
+      AI Readiness: ${business.aiReadinessScore}/100
+      
+      Requirements:
+      - Professional but friendly tone
+      - Mention specific AI opportunity for their industry
+      - Include a soft CTA for a brief call
+      - Keep under 150 words
+      - Reference local connection (same area)
+    `;
+
+    const response = await fetch('/api/generate-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const { email } = await response.json();
+    setEmailTemplate(email);
+    setCustomizing(false);
+  };
+
+  return (
+    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="font-semibold text-blue-900">Cold Outreach Email</h4>
+        <button 
+          onClick={generateEmail}
+          disabled={customizing}
+          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+        >
+          {customizing ? 'Generating...' : '🤖 Generate Email'}
+        </button>
+      </div>
+      
+      {emailTemplate && (
+        <textarea 
+          value={emailTemplate}
+          onChange={(e) => setEmailTemplate(e.target.value)}
+          className="w-full h-32 p-3 border rounded-lg text-sm"
+          placeholder="Email template will appear here..."
+        />
+      )}
+      
+      {emailTemplate && (
+        <div className="mt-3 flex gap-2">
+          <button 
+            onClick={() => navigator.clipboard.writeText(emailTemplate)}
+            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+          >
+            📋 Copy Email
+          </button>
+          <button 
+            onClick={() => window.open(`mailto:?subject=AI Solutions for ${business.name}&body=${encodeURIComponent(emailTemplate)}`)}
+            className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+          >
+            📧 Open in Email
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
